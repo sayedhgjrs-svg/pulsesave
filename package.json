@@ -1,0 +1,23 @@
+{
+  "name": "pulsesave",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modern, fast full-stack video downloader for TikTok, Instagram Reels and YouTube — premium dark-mode UI, watermark-free downloads.",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "check": "node --check server/index.js && node --check api/index.js && node --check server/routes/api.js && node --check server/lib/platforms.js && node --check server/lib/formats.js && node --check server/lib/ytdlp.js && node --check server/lib/demo.js && node --check server/lib/rate-limit.js && node --check server/lib/errors.js && node --check public/js/app.js && node --check test/fixtures/fake-ytdlp.js"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}
