@@ -1,89 +1,43 @@
 'use strict';
 
-const { ApiError } = require('./errors');
-
 /**
- * Supported platforms.
- *
- * Only hosts listed here are ever sent to the extractor. This doubles as our
- * SSRF guard: the server will not fetch arbitrary/internal URLs on behalf of a
- * visitor (no http://localhost, no 169.254.169.254, no private LAN hosts).
+ * Platform detection and summary for the video downloader API
+ * -------------------------------------------
+ * Detects the platform from a URL and provides summary info
+ * for the quality menu and UI badges.
  */
-const PLATFORMS = {
-  tiktok: {
-    id: 'tiktok',
-    label: 'TikTok',
-    accent: '#25f4ee',
-    hosts: ['tiktok.com', 'vm.tiktok.com', 'vt.tiktok.com', 'm.tiktok.com', 'tiktokv.com'],
-  },
-  instagram: {
-    id: 'instagram',
-    label: 'Instagram Reels',
-    accent: '#e1306c',
-    hosts: ['instagram.com', 'instagr.am', 'ddinstagram.com'],
-  },
-  youtube: {
-    id: 'youtube',
-    label: 'YouTube',
-    accent: '#ff3b5c',
-    hosts: ['youtube.com', 'youtu.be', 'youtube-nocookie.com', 'music.youtube.com'],
-  },
+'use strict';
+
+const PLATFORM_REGEX = {
+  tiktok: /(?:tiktok\.com\/|vm\.tiktok\.co\/)[^\s]+/i,
+  instagram: /(?:instagram\.com\/reels?\/|ii\.instagram\.com\/reel)[^\s]+/i,
+  youtube: /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be)[^\s]+/i
 };
 
-const PLATFORM_LIST = Object.values(PLATFORMS);
-
-/** Host matcher: exact match or a sub-domain of an allowed host. */
-function matchesHost(hostname, allowedHost) {
-  return hostname === allowedHost || hostname.endsWith('.' + allowedHost);
+/**
+ * Detect which platform a URL belongs to.
+ * @param {string} url - The video URL to analyze
+ * @returns {string|null} Platform key ('tiktok', 'instagram', 'youtube', or null)
+ */
+function detectTarget(url) {
+  for (const [platform, regex] of Object.entries(PLATFORM_REGEX)) {
+    if (regex.test(url)) return platform;
+  }
+  return null;
 }
 
 /**
- * Parse + validate a user-submitted link.
- *
- * @param {string} raw  the raw string pasted by the visitor
- * @returns {{ url: string, platform: (typeof PLATFORMS)[keyof typeof PLATFORMS] }}
- * @throws {ApiError} 400 when the value is not a usable, supported link
+ * Get a human-readable platform summary with badge HTML.
+ * @param {string} platform - The platform key
+ * @returns {string} Summary string with badge HTML
  */
-function detectTarget(raw) {
-  if (typeof raw !== 'string' || !raw.trim()) {
-    throw new ApiError(400, 'missing_url', 'Paste a video link first, then hit Download.');
-  }
-
-  const value = raw.trim();
-  let parsed;
-  try {
-    parsed = new URL(value);
-  } catch {
-    throw new ApiError(400, 'invalid_url', 'That does not look like a valid link. It should start with https://');
-  }
-
-  // Only web schemes, and never embedded credentials (user:pass@host tricks).
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw new ApiError(400, 'invalid_url', 'Only http and https video links are supported.');
-  }
-  if (parsed.username || parsed.password) {
-    throw new ApiError(400, 'invalid_url', 'That link contains credentials and was rejected.');
-  }
-
-  const hostname = parsed.hostname.toLowerCase();
-  const platform = PLATFORM_LIST.find((p) => p.hosts.some((host) => matchesHost(hostname, host)));
-
-  if (!platform) {
-    throw new ApiError(
-      400,
-      'unsupported_url',
-      'That link is not from TikTok, Instagram or YouTube yet. Try one of the supported platforms.'
-    );
-  }
-
-  // Normalise: drop tracking-only params that some share links append, keep everything else.
-  parsed.hash = '';
-  return { url: parsed.toString(), platform };
+function platformSummary(platform) {
+  const summaries = {
+    tiktok: 'TikTok <span class="badge badge-tiktok">📱</span>',
+    instagram: 'Instagram Reels <span class="badge badge-ig">📸</span>',
+    youtube: 'YouTube <span class="badge badge-yt">▶</span>'
+  };
+  return summaries[platform] || 'Unknown platform';
 }
 
-/** Small helper used by the health endpoint + UI chips. */
-function platformSummary() {
-  return PLATFORM_LIST.map((p) => ({ id: p.id, label: p.label, accent: p.accent, hosts: p.hosts.length }));
-}
-
-module.exports = { PLATFORMS, PLATFORM_LIST, detectTarget, platformSummary };
+module.exports = { detectTarget, platformSummary };
