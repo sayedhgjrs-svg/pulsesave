@@ -1,52 +1,39 @@
 'use strict';
 
 /**
- * Tiny in-memory sliding-window rate limiter.
- *
- * Keeps the API polite without adding a Redis dependency. State is per
- * process; swap this for a shared store (Redis/Upstash) if you run multiple
- * instances behind a load balancer.
+ * Rate limiting utility for API endpoints
+ * -------------------------------
+ * Provides per-IP rate limiting with configurable windows.
  */
-function createRateLimit({ name, windowMs, max }) {
-  const buckets = new Map();
+'use strict';
 
-  const sweeper = setInterval(
-    () => {
-      const now = Date.now();
-      for (const [key, entry] of buckets) {
-        if (entry.resetAt <= now) buckets.delete(key);
-      }
-    },
-    Math.max(windowMs, 1_000)
-  );
-  if (typeof sweeper.unref === 'function') sweeper.unref();
+const rateLimits = new Map();
 
+/**
+ * Create a rate limiter middleware for Express.
+ * @param {Object} options - Rate limiter options
+ * @param {number} options.windowMs - Rate limit window in milliseconds (default: 60000)
+ * @param {number} options.max - Max requests per window (default: 30)
+ * @param {string} options.name - Identifier key prefix (default: 'global')
+ * @returns {Function} Express middleware function
+ */
+function createRateLimit(options = {}) {
+  const { windowMs = 60_000, max = 30, name = 'global' } = options;
   return function rateLimit(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const key = `${name}:${ip}`;
     const now = Date.now();
-    const key = `${req.ip || req.socket?.remoteAddress || 'unknown'}|${name}`;
-
-    let entry = buckets.get(key);
-    if (!entry || entry.resetAt <= now) {
-      entry = { count: 0, resetAt: now + windowMs };
-      buckets.set(key, entry);
-    }
-    entry.count += 1;
-
-    res.setHeader('X-RateLimit-Limit', String(max));
-    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, max - entry.count)));
-    res.setHeader('X-RateLimit-Reset', String(Math.ceil(entry.resetAt / 1000)));
-
-    if (entry.count > max) {
-      res.setHeader('Retry-After', String(Math.ceil((entry.resetAt - now) / 1000)));
-      res.status(429).json({
-        ok: false,
-        error: { code: 'rate_limited', message: 'Too many requests — give it a few seconds and try again.' },
+    const window = rateLimits.get(key) || [];
+    const recent = window.filter(t => now - t < windowMs);
+    if (recent.length >= max) {
+      return res.status(429).json({
+        error: 'Rate limit exceeded',
+        retryAfterMs: windowMs - (now - recent[0])
       });
-      return;
     }
-
+    rateLimits.set(key, [...recent, now]);
     next();
   };
 }
 
-module.exports = { createRateLimit };
+module.exports = createRateLimit;
