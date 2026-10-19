@@ -1,24 +1,55 @@
 'use strict';
 
 /**
- * ApiError — the single error type the HTTP layer knows how to render.
- *
- * Every failure the API can produce carries:
- *  - status: the HTTP status code
- *  - code:    a stable, machine-readable string the frontend can branch on
- *  - message: a human-readable, user-safe sentence (never leak stack traces
- *             or raw yt-dlp output to the client)
+ * ApiError - Standardized error responses for the API
+ * -------------------------------------------
+ * Creates error objects with status codes and message strings
+ * that are consistently formatted for JSON responses.
  */
+'use strict';
+
 class ApiError extends Error {
-  constructor(status, code, message) {
+  constructor(statusCode, message) {
     super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.code = code;
+    this.statusCode = statusCode;
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    Error.captureStackTrace(this, this.constructor);
   }
 
-  toJSON() {
-    return { ok: false, error: { code: this.code, message: this.message } };
+  /**
+   * Create a 400 Bad Request error
+   * @param {string} message - Error description
+   * @returns {ApiError}
+   */
+  static badRequest(message) {
+    return new ApiError(400, message);
+  }
+
+  /**
+   * Create a 403 Forbidden error
+   * @param {string} message - Error description
+   * @returns {ApiError}
+   */
+  static forbidden(message) {
+    return new ApiError(403, message);
+  }
+
+  /**
+   * Create a 429 Too Many Requests error
+   * @param {string} message - Error description
+   * @returns {ApiError}
+   */
+  static tooManyRequests(message) {
+    return new ApiError(429, message);
+  }
+
+  /**
+   * Create a 500 Internal Server Error
+   * @param {string} message - Error description
+   *   @returns {ApiError}
+   */
+  static internal(message) {
+    return new ApiError(500, message);
   }
 }
 
