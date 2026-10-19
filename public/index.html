@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>PulseSave — Fast, watermark-free video downloader</title>
+    <meta
+      name="description"
+      content="Paste a TikTok, Instagram Reels or YouTube link and download a clean, watermark-free MP4 in seconds. Free, no sign-up, mobile friendly."
+    />
+    <meta name="theme-color" content="#06070b" />
+    <meta name="color-scheme" content="dark" />
+
+    <!--
+      Content Security Policy.
+      NOTE FOR AD INTEGRATION: when you paste a real ad-network script, add its
+      domains to `script-src` (and `frame-src` if you use ad iframes), e.g.:
+        script-src 'self' https://pagead2.googlesyndication.com https://www.googletagmanager.com
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; script-src 'self'; connect-src 'self'; form-action 'self'"
+    />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script src="/js/app.js" defer></script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- ================= Site header ================= -->
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="/" aria-label="PulseSave home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M4 20h16" />
+            </svg>
+          </span>
+          <span class="brand-name">Pulse<em>Save</em></span>
+        </a>
+
+        <nav class="nav" aria-label="Primary">
+          <a href="#how">How it works</a>
+          <a href="#faq">FAQ</a>
+          <a href="#disclaimer">Fair use</a>
+        </nav>
+
+        <span class="pill pill--engine" id="engine-badge" title="Extraction engine status">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="engine-badge-text">Checking engine…</span>
+        </span>
+      </div>
+    </header>
+
+    <!-- ==================================================================
+         AD SLOT #1 — TOP BANNER (leaderboard)
+         Suggested sizes: 728×90 desktop, 320×100 / 300×100 mobile.
+         Replace the placeholder markup inside #ad-top with your ad snippet
+         (AdSense example is commented out right below it).
+    =================================================================== -->
+    <section class="ad-zone ad-zone--top container" aria-label="Advertisement">
+      <p class="ad-label">Advertisement</p>
+      <div class="ad-slot ad-slot--banner" id="ad-top">
+        <!--
+          ADSENSE EXAMPLE (uncomment and replace ca-pub/ids):
+
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+               data-ad-slot="1111111111"
+               data-ad-format="horizontal"
+               data-full-width-responsive="true"></ins>
+          <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        -->
+        <span class="ad-placeholder">Top banner — responsive 728×90 / 320×100</span>
+      </div>
+    </section>
+
+    <main id="main">
+      <!-- ================= Hero ================= -->
+      <section class="hero container">
+        <p class="eyebrow">
+          <span class="eyebrow-dot" aria-hidden="true"></span>
+          TikTok · Instagram Reels · YouTube
+        </p>
+        <h1>Grab any video. <span class="grad">Clean, fast, watermark-free.</span></h1>
+        <p class="lede">
+          Paste a link and get a crisp MP4 in seconds — no sign-up, no watermarks, no browser extensions.
+          Built on a real extraction engine, wrapped in an interface that stays out of your way.
+        </p>
+      </section>
+
+      <div class="container layout">
+        <div class="layout-main">
+          <!-- ================= Downloader ================= -->
+          <section class="card downloader" aria-labelledby="downloader-title">
+            <h2 id="downloader-title" class="sr-only">Video downloader</h2>
+
+            <form id="download-form" novalidate>
+              <label class="field-label" for="link-input">Video link</label>
+
+              <div class="input-row">
+                <div class="input-wrap">
+                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1 1" />
+                    <path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1-1" />
+                  </svg>
+                  <input
+                    id="link-input"
+                    name="url"
+                    type="url"
+                    inputmode="url"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="https://www.tiktok.com/@creator/video/7361…"
+                    aria-describedby="platform-detector"
+                  />
+                  <button type="button" class="paste-btn" id="paste-btn">Paste</button>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" id="download-btn">
+                  <span class="btn-label">Download</span>
+                  <span class="btn-spinner" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <div class="input-meta">
+                <span class="platform-detector" id="platform-detector" role="status" aria-live="polite">
+                  Paste a link to begin
+                </span>
+                <span class="hint">Free · No sign-up · No watermarks</span>
+              </div>
+            </form>
+          </section>
+
+          <!-- ==================================================================
+               AD SLOT #2 — IN-FEED (between the tool and the results)
+               Good for a 336×280 large rectangle or a responsive in-article ad.
+          =================================================================== -->
+          <section class="ad-zone ad-zone--infeed" aria-label="Advertisement">
+            <p class="ad-label">Advertisement</p>
+            <div class="ad-slot ad-slot--rect" id="ad-infeed">
+              <!--
+                ADSENSE EXAMPLE:
+
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                     data-ad-slot="2222222222"
+                     data-ad-format="rectangle"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+              -->
+              <span class="ad-placeholder">In-feed rectangle — 336×280</span>
+            </div>
+          </section>
+
+          <!-- ================= Status + results ================= -->
+          <p class="status" id="status" role="status" aria-live="polite"></p>
+
+          <section class="results" id="results" hidden aria-live="polite">
+            <div class="results-head">
+              <h2>Your video</h2>
+              <button type="button" class="btn btn-ghost btn-sm" id="clear-btn">Clear</button>
+            </div>
+            <div class="result-grid" id="result-grid"></div>
+          </section>
+
+          <section class="empty-state" id="empty-state">
+            <div class="empty-art" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2.5" y="5" width="19" height="14" rx="3" />
+                <path d="m10 9.5 5 2.5-5 2.5Z" />
+              </svg>
+            </div>
+            <h3>Nothing here yet</h3>
+            <p>Paste a TikTok, Instagram or YouTube link above. Your video preview and quality options appear here.</p>
+            <div class="empty-chips">
+              <span class="chip chip--tiktok">TikTok</span>
+              <span class="chip chip--instagram">Instagram Reels</span>
+              <span class="chip chip--youtube">YouTube</span>
+            </div>
+          </section>
+
+          <!-- ================= How it works ================= -->
+          <section class="section" id="how">
+            <h2 class="section-title">Three steps, zero friction</h2>
+            <div class="feature-grid">
+              <article class="feature">
+                <span class="feature-num">01</span>
+                <h3>Copy a link</h3>
+                <p>On TikTok, Reels or YouTube, tap Share → Copy link. Short links and full URLs both work.</p>
+              </article>
+              <article class="feature">
+                <span class="feature-num">02</span>
+                <h3>Paste &amp; analyze</h3>
+                <p>The server reads the post metadata and builds a quality menu in about a second.</p>
+              </article>
+              <article class="feature">
+                <span class="feature-num">03</span>
+                <h3>Pick a quality</h3>
+                <p>Choose 1080p, 720p or Auto, then download a clean MP4 straight to your device.</p>
+              </article>
+            </div>
+          </section>
+
+          <!-- ================= FAQ ================= -->
+          <section class="section" id="faq">
+            <h2 class="section-title">Questions, answered</h2>
+            <div class="faq-list">
+              <details class="faq-item" open>
+                <summary>Do downloads include watermarks?</summary>
+                <p>
+                  TikTok publishes both a watermarked and a clean rendition of a video. PulseSave prefers the clean
+                  rendition, so the default download has no TikTok watermark. Instagram Reels and YouTube never add a
+                  watermark to the underlying file.
+                </p>
+              </details>
+              <details class="faq-item">
+                <summary>Why do I see a “preview data” badge?</summary>
+                <p>
+                  The server runs in demo mode when <code>yt-dlp</code> is not installed, or when the platform blocks
+                  the server. Install <code>yt-dlp</code> (and optionally <code>ffmpeg</code>) on the host and reload —
+                  the badge switches to the live engine version automatically.
+                </p>
+              </details>
+              <details class="faq-item">
+                <summary>What quality can I get?</summary>
+                <p>
+                  Single-file renditions (up to 1080p on most posts) work with no extra software. Installing
+                  <code>ffmpeg</code> unlocks merged “video + audio” streams, which is how 1440p/4K YouTube is served.
+                </p>
+              </details>
+              <details class="faq-item">
+                <summary>Is this legal?</summary>
+                <p>
+                  Only download content you own or have permission to save, and respect each platform’s Terms of
+                  Service. See the fair-use note in the footer.
+                </p>
+              </details>
+            </div>
+          </section>
+        </div>
+
+        <!-- ================= Sidebar ================= -->
+        <aside class="sidebar" aria-label="Sidebar">
+          <!-- ==================================================================
+               AD SLOT #3 — SIDEBAR (sticky)
+               Suggested sizes: 300×250 medium rectangle, 300×600 half-page.
+               On mobile this zone moves below the results (see CSS .sidebar).
+          =================================================================== -->
+          <section class="ad-zone ad-zone--side" aria-label="Advertisement">
+            <p class="ad-label">Advertisement</p>
+            <div class="ad-slot ad-slot--side" id="ad-sidebar">
+              <!--
+                ADSENSE EXAMPLE:
+
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                     data-ad-slot="3333333333"
+                     data-ad-format="rectangle"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+              -->
+              <span class="ad-placeholder">Sidebar — 300×250</span>
+            </div>
+          </section>
+
+          <div class="side-card">
+            <h3>Supported sources</h3>
+            <ul class="source-list">
+              <li>
+                <span class="source-dot" style="--c: #25f4ee"></span>
+                TikTok — videos &amp; photo slideshows
+              </li>
+              <li>
+                <span class="source-dot" style="--c: #e1306c"></span>
+                Instagram Reels &amp; posts
+              </li>
+              <li>
+                <span class="source-dot" style="--c: #ff3b5c"></span>
+                YouTube videos, Shorts &amp; clips
+              </li>
+            </ul>
+            <hr />
+            <h3>Tips for best quality</h3>
+            <ul class="tip-list">
+              <li>Use the full link, not a screenshot or text with the link inside.</li>
+              <li>Public posts work best — private or age-gated videos are blocked.</li>
+              <li>Install <code>ffmpeg</code> on the server to unlock 1440p/4K.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- ==================================================================
+         AD SLOT #4 — BOTTOM BANNER (anchor ad, above the footer)
+         Suggested sizes: 970×90 billboard / 728×90 leaderboard / 320×100 mobile.
+    =================================================================== -->
+    <section class="ad-zone ad-zone--bottom container" aria-label="Advertisement">
+      <p class="ad-label">Advertisement</p>
+      <div class="ad-slot ad-slot--banner" id="ad-bottom">
+        <!--
+          ADSENSE EXAMPLE:
+
+          <ins class="adsbygoogle"
+               style="display:block"
+               data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+               data-ad-slot="4444444444"
+               data-ad-format="horizontal"
+               data-full-width-responsive="true"></ins>
+          <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        -->
+        <span class="ad-placeholder">Bottom banner — 970×90 / 320×100</span>
+      </div>
+    </section>
+
+    <!-- ================= Footer ================= -->
+    <footer class="site-footer" id="disclaimer">
+      <div class="container footer-inner">
+        <div class="footer-brand">
+          <span class="brand-mark brand-mark--sm" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M4 20h16" />
+            </svg>
+          </span>
+          <span>PulseSave</span>
+        </div>
+        <p class="footer-note">
+          Fair use note: download only content you own or have rights to save, and always respect creators and each
+          platform’s Terms of Service. PulseSave is not affiliated with TikTok, Instagram or YouTube.
+        </p>
+        <p class="footer-meta">Built with Node.js + Express · Extraction by yt-dlp · © <span id="year"></span></p>
+      </div>
+    </footer>
+
+    <div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="false"></div>
+  </body>
+</html>
