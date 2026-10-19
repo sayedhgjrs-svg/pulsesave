@@ -1,14 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7c5cff" />
-      <stop offset="1" stop-color="#22d3ee" />
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="16" fill="url(#g)" />
-  <g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M32 14v24" />
-    <path d="m20 27 12 12 12-12" />
-    <path d="M14 50h36" />
-  </g>
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='100' height='100' fill='none'>
+  <rect x='10' y='10' width='80' height='80' rx='8' ry='8' stroke='var(--accent)' stroke-width='2'/>
+  <text x='50' y='65' font-family='Sora, sans-serif' font-size='20' fill='var(--accent)' text-anchor='middle' dominant-baseline='middle'>PS</text>
 </svg>

@@ -1,0 +1,33 @@
+/*! pulse-design-system.css */
+:root {
+  --bg: #0a0a0f;
+  --bg-subtle: #12121a;
+  --card: #1a1a24;
+  --muted: #6b6b80;
+  --accent: #e94a4a;
+  --accent-glow: rgba(233, 74, 74, 0.4);
+  --text: #f0f0f5;
+  --font-family: 'Sora', sans-serif;
+  --transition: all 0.3s ease;
+}
+
+/* Card transitions */
+.card {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Focus states */
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01s !important;
+    animation-duration: 0.01s !important;
+    transition-delay: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
