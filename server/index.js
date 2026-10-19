@@ -1,88 +1,58 @@
 'use strict';
 
-/**
- * PulseSave server
- * ----------------
- * A small, fast Express app that serves the static UI plus a JSON API backed
- * by yt-dlp (with a graceful demo fallback when yt-dlp is not installed).
- *
- *   GET /api/health     engine status + supported platforms
- *   GET /api/info       metadata + quality menu for a link
- *   GET /api/download   streams the file as an attachment
- *
- * Run with `npm start` (PORT env var, default 3000).
- */
-
 const path = require('node:path');
 const express = require('express');
+const fs = require('node:fs');
+const os = require('node:os');
 
+const { createRateLimit } = require('../lib/rate-limit');
+const app = express();
+
+const globalLimit = createRateLimit({
+  name: 'global',
+  windowMs: 60_000,
+  max: Number(process.env.RATE_LIMIT_GLOBAL) || 100,
+});
+
+app.use(globalLimit);
+
+// Serve static UI from public/
+const publicDir = path.join(__dirname, '..', 'public');
+app.use(express.static(publicDir, { extensions: ['html'] }));
+
+// API routes
 const apiRouter = require('./routes/api');
-const { ApiError } = require('./lib/errors');
+app.use('/api', apiRouter);
 
-const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
-/** Baseline security headers for an app that renders untrusted metadata. */
-function securityHeaders(req, res, next) {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  next();
-}
+// Error handling middleware
+app.use((err, req, res, next) => {
+  const status = err.statusCode || 500;
+  res.status(status).json({ error: err.message || 'Internal error' });
+});
 
-function createApp() {
-  const app = express();
+// Start server
+const PORT = Number(process.env.PORT) || 3000;
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`PulseSave running at http://localhost:${PORT}`);
+});
 
-  app.disable('x-powered-by');
-  app.set('trust proxy', true); // correct client IPs behind a reverse proxy / tunnel
-  app.use(securityHeaders);
-  app.use(express.json({ limit: '32kb' }));
+// Write PID file forProc monitoring
+const pidPath = path.join(__dirname, '..', 'server.pid');
+fs.writeFileSync(pidPath, String(process.pid));
 
-  // API first, so /api 404s stay JSON and never fall through to the SPA.
-  app.use('/api', apiRouter);
-
-  // Static UI (no build step — plain HTML/CSS/JS, which keeps first paint fast).
-  app.use(
-    express.static(PUBLIC_DIR, {
-      index: 'index.html',
-      maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
-      setHeaders(res, filePath) {
-        if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-store');
-      },
-    })
-  );
-
-  // Unknown non-API routes get the app shell.
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api/')) return next();
-    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
-  });
-
-  // Central error handler: always JSON for /api, never leak internals.
-  // eslint-disable-next-line no-unused-vars
-  app.use((err, req, res, next) => {
-    if (err instanceof ApiError) {
-      res.status(err.status).json(err.toJSON());
-      return;
-    }
-    console.error('[pulsesave] unhandled error:', err);
-    res.status(500).json({
-      ok: false,
-      error: { code: 'internal_error', message: 'Something went wrong on our side. Please try again.' },
+// Graceful shutdown
+const SIGS = ['SIGTERM', 'SIGINT'];
+for (const sig of SIGS) {
+  process.on(sig, () => {
+    console.log(`Received ${sig}, shutting down...`);
+    server.close(() => {
+      try { fs.unlinkSync(pidPath); } catch {}
+      process.exit(0);
     });
   });
-
-  return app;
 }
-
-const PORT = Number(process.env.PORT) || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
-
-if (require.main === module) {
-  const app = createApp();
-  app.listen(PORT, HOST, () => {
-    console.log(`\n  PulseSave running at http://localhost:${PORT}\n`);
-  });
-}
-
-module.exports = { createApp };
